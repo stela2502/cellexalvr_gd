@@ -5,7 +5,12 @@ use std::path::PathBuf;
 
 fn main() {
     // Determine current working directory (the Rust project root)
-    let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
+    let manifest_dir = env::var("CARGO_MANIFEST_DIR")
+    .map(PathBuf::from)
+    .unwrap_or_else(|_| {
+        // When running from Godot (not Cargo), fall back to current dir
+        std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+    });
 
     // Path to compiled library
     let lib_name = if cfg!(target_os = "windows") {

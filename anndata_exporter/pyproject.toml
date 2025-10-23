@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anndata_exporter"
+version = "0.1.0"
+description = "Export AnnData objects to Cell Ranger-like folder structures"
+authors = [
+    {name = "Stefan Lang", email = "your.email@example.com"}
+]
+license = {text = "MIT"}
+dependencies = ["anndata", "scipy", "pandas", "numpy"]
+requires-python = ">=3.8"
+
+[tool.setuptools.packages.find]
+where = ["anndata_exporter"]

@@ -1,0 +1,21 @@
+Package: SeuratExporter
+Type: Package
+Title: Export Seurat Objects to Cell Ranger Compatible Folder
+Version: 0.1.0
+Author: Stefan Lang
+Maintainer: Stefan Lang <stefan.lang@med.lu.se>
+Description: Provides a simple utility to export Seurat objects into 
+    a Cell Ranger-style folder structure, including matrix.mtx.gz, 
+    barcodes.tsv.gz, features.tsv.gz, metadata, and embeddings (.drc files).
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 4.0)
+Imports:
+    Seurat,
+    Matrix,
+    R.utils
+RoxygenNote: 7.3.2
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
