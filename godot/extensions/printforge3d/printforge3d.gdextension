@@ -1,0 +1,14 @@
+[configuration]
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = "4.2"
+reloadable = true
+
+[libraries]
+windows.debug.x86_64   = "res://extensions/printforge3d/bin/rust_print_forge_3d.dll"
+windows.release.x86_64 = "res://extensions/printforge3d/bin/rust_print_forge_3d.dll"
+
+linux.debug.x86_64     = "res://extensions/printforge3d/bin/librust_print_forge_3d.so"
+linux.release.x86_64   = "res://extensions/printforge3d/bin/librust_print_forge_3d.so"
+
+macos.debug.universal  = "res://extensions/printforge3d/bin/librust_print_forge_3d.dylib"
+macos.release.universal= "res://extensions/printforge3d/bin/librust_print_forge_3d.dylib"

@@ -1,0 +1,42 @@
+[gd_scene load_steps=6 format=3 uid="uid://main"]
+
+[ext_resource type="Script" uid="uid://hfay7t47m261" path="res://scripts/main.gd" id="1_o5qli"]
+
+[sub_resource type="Environment" id="Environment_sgp6g"]
+
+[sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_o5qli"]
+
+[sub_resource type="Compositor" id="Compositor_0wfyh"]
+
+[sub_resource type="Environment" id="Environment_o5qli"]
+background_mode = 2
+background_energy_multiplier = 1.47
+ambient_light_color = Color(0.9027909, 0.87511545, 0.7707618, 1)
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_o5qli")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.12951279, 0.14980745, 10.021069)
+top_level = true
+environment = SubResource("Environment_sgp6g")
+attributes = SubResource("CameraAttributesPractical_o5qli")
+compositor = SubResource("Compositor_0wfyh")
+current = true
+fov = 154.6875
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.8822975, -2.3196373, 7.5862894)
+top_level = true
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_o5qli")
+
+[node name="DirectionalLight3D2" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.504314, 39.1109, 4.62957)
+shadow_enabled = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
+

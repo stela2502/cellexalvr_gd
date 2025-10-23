@@ -1,0 +1,15 @@
+[package]
+name = "rust_print_forge_3d"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]  # Compile this crate to a dynamic C library.
+name = "rust_print_forge_3d"
+
+[dependencies]
+godot = { git = "https://github.com/godot-rust/gdext" }
+glam = "0.30.8"
+stl_io = "0.8.5"
+tri-mesh = "0.6.1"
+parry3d = "0.15"
