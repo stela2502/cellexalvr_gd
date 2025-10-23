@@ -17,6 +17,10 @@ devtools::load_all("SeuratExporter")
 ```r
 library(SeuratExporter)
 library(Seurat)
+
+# Download (if not already installed)
+SeuratData::InstallData("pbmc3k")
+
 pbmc <- SeuratData::LoadData("pbmc3k")
 export_seurat_to_folder(pbmc, "pbmc3k/")
 ```
