@@ -1,0 +1,74 @@
+#version 450
+#shader_type spatial
+
+// -------------------------------------------------------------------------
+// Storage buffer layout (set/binding numbers may vary depending on binding).
+// One uvec4 per cell, 16 bytes per entry.
+layout(std430, set = 1, binding = 0) readonly buffer CellBuffer {
+    uvec4 cells[];
+};
+
+// Push constants from Rust / Godot
+layout(push_constant) uniform PushConsts {
+    ivec2 tex_dims;       // grid dims if needed for flattening
+    float global_scale;   // world-space scaling
+    float global_size;    // disc-size multiplier
+} pc;
+
+// -------------------------------------------------------------------------
+// Vertex stage
+// -------------------------------------------------------------------------
+void vertex()
+{
+    uint vid = uint(gl_VertexIndex);
+    uvec4 packed = cells[vid];
+
+    // packed.x,y,z = encoded position bits (as uint bits of float32)
+    vec3 pos = vec3(
+        uintBitsToFloat(packed.x),
+        uintBitsToFloat(packed.y),
+        uintBitsToFloat(packed.z)
+    );
+
+    // packed.w:
+    //  bits  0–23 : RGB (8 bits each)
+    //  bits 24–55 : ID  (32 bits)
+    //  bits 56–87 : size (float32 bits)
+    //  layout example: [size32][id32][RGB24|pad8]
+
+    uint rgb_bits  =  packed.w & 0x00FFFFFFu;
+    uint id_bits   = (packed.w >> 24u) & 0xFFFFFFFFu;
+    float size     = uintBitsToFloat((packed.w >> 56u) & 0xFFFFFFFFu);
+
+    vec3 color = vec3(
+        float((rgb_bits >>  0u) & 0xFFu),
+        float((rgb_bits >>  8u) & 0xFFu),
+        float((rgb_bits >> 16u) & 0xFFu)
+    ) / 255.0;
+
+    // Transform to clip space
+    vec4 world_pos = vec4(pos * pc.global_scale, 1.0);
+    gl_Position = projection_matrix * modelview_matrix * world_pos;
+
+    // Pixel radius of disc
+    gl_PointSize = pc.global_size;
+
+    out_color = vec4(color, 1.0);
+}
+
+// -------------------------------------------------------------------------
+// Fragment stage
+// -------------------------------------------------------------------------
+void fragment()
+{
+    // Map from 0–1 quad to circle
+    vec2 uv = (gl_PointCoord - 0.5) * 2.0;
+    float r = length(uv);
+    if (r > 1.0)
+        discard;
+
+    // Soft edge fade
+    float fade = 1.0 - r * r;
+    vec3 col = in_color.rgb * fade;
+    out_color = vec4(col, fade);
+}

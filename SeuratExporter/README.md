@@ -22,6 +22,18 @@ library(Seurat)
 SeuratData::InstallData("pbmc3k")
 
 pbmc <- SeuratData::LoadData("pbmc3k")
+
+
+# Standard workflow to generate reductions
+pbmc <- NormalizeData(pbmc)
+pbmc <- FindVariableFeatures(pbmc)
+pbmc <- ScaleData(pbmc)
+pbmc <- RunPCA(pbmc)
+pbmc <- RunUMAP(pbmc, dims = 1:10, n.components=3)
+pbmc <- FindNeighbors(pbmc, dims = 1:10)
+pbmc <- FindClusters(pbmc, resolution = 0.5)
+
+
 export_seurat_to_folder(pbmc, "pbmc3k/")
 ```
 

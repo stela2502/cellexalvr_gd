@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://dupmwgbksbxdv"]
+
+[sub_resource type="Sky" id="Sky_bqslo"]
+radiance_size = 4
+
+[sub_resource type="Environment" id="Environment_vvj0e"]
+resource_local_to_scene = true
+background_mode = 2
+sky = SubResource("Sky_bqslo")
+
+[node name="WorldEnvironment" type="WorldEnvironment"]
+environment = SubResource("Environment_vvj0e")

@@ -1,6 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://main"]
+[gd_scene load_steps=10 format=3 uid="uid://main"]
 
 [ext_resource type="Script" uid="uid://hfay7t47m261" path="res://scripts/main.gd" id="1_o5qli"]
+[ext_resource type="Script" uid="uid://cbnqnb02exlkl" path="res://scripts/camera_conmtroller.gd" id="2_0wfyh"]
+[ext_resource type="PackedScene" path="res://scenes/Floor.tscn" id="3_sugp2"]
+[ext_resource type="PackedScene" uid="uid://dupmwgbksbxdv" path="res://scenes/SkyWorld.tscn" id="4_jyhfs"]
 
 [sub_resource type="Environment" id="Environment_sgp6g"]
 
@@ -8,10 +11,13 @@
 
 [sub_resource type="Compositor" id="Compositor_0wfyh"]
 
-[sub_resource type="Environment" id="Environment_o5qli"]
+[sub_resource type="Sky" id="Sky_bqslo"]
+radiance_size = 4
+
+[sub_resource type="Environment" id="Environment_jyhfs"]
+resource_local_to_scene = true
 background_mode = 2
-background_energy_multiplier = 1.47
-ambient_light_color = Color(0.9027909, 0.87511545, 0.7707618, 1)
+sky = SubResource("Sky_bqslo")
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_o5qli")
@@ -24,14 +30,17 @@ attributes = SubResource("CameraAttributesPractical_o5qli")
 compositor = SubResource("Compositor_0wfyh")
 current = true
 fov = 154.6875
+script = ExtResource("2_0wfyh")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.8822975, -2.3196373, 7.5862894)
 top_level = true
+light_color = Color(0.99999994, 0.9772336, 0.116448976, 1)
+light_energy = 9.082
+light_indirect_energy = 2.649
 shadow_enabled = true
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_o5qli")
+shadow_bias = 0.719
+sky_mode = 1
 
 [node name="DirectionalLight3D2" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.504314, 39.1109, 4.62957)
@@ -40,3 +49,24 @@ shadow_enabled = true
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
 
+[node name="CSGSphere3D" type="CSGSphere3D" parent="MeshInstance3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0, 0)
+visible = false
+
+[node name="XROrigin3D" type="XROrigin3D" parent="."]
+
+[node name="XRController3D" type="XRController3D" parent="XROrigin3D"]
+tracker = &"left_hand"
+
+[node name="XRController3D2" type="XRController3D" parent="XROrigin3D"]
+tracker = &"right_hand"
+
+[node name="XRController3D3" type="XRController3D" parent="XROrigin3D"]
+tracker = &"head"
+
+[node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
+
+[node name="Floor" parent="." instance=ExtResource("3_sugp2")]
+
+[node name="WorldEnvironment" parent="." instance=ExtResource("4_jyhfs")]
+environment = SubResource("Environment_jyhfs")

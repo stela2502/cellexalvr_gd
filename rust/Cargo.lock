@@ -70,7 +70,7 @@ version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e231f6134f61b71076a3eab506c379d4f36122f2af15a9ff04415ea4c3339e2"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys",
 ]
 
 [[package]]
@@ -81,7 +81,7 @@ checksum = "3e0633414522a32ffaac8ac6cc8f748e090c5717661fddeea04219e2344f5f2a"
 dependencies = [
  "anstyle",
  "once_cell_polyfill",
- "windows-sys 0.60.2",
+ "windows-sys",
 ]
 
 [[package]]
@@ -307,7 +307,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys",
 ]
 
 [[package]]
@@ -898,9 +898,10 @@ checksum = "4e27ee8bb91ca0adcf0ecb116293afa12d393f9c2b9b9cd54d33e8078fe19839"
 [[package]]
 name = "rust_data_table"
 version = "0.1.0"
-source = "git+https://github.com/stela2502/rust_data_table.git#4414adabcb06dac9a9c00ae35b457a47eb83e459"
+source = "git+https://github.com/stela2502/rust_data_table.git#a978460f4c7c5eca49ccf17584a1a3175a436509"
 dependencies = [
  "anyhow",
+ "clap",
  "csv",
  "ndarray 0.16.1",
  "ordered-float",
@@ -931,7 +932,9 @@ dependencies = [
  "flate2",
  "glam",
  "godot",
+ "ndarray 0.16.1",
  "parry3d",
+ "rayon",
  "rust_data_table",
  "rust_kmeans",
  "sprs",
@@ -955,7 +958,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys",
 ]
 
 [[package]]
@@ -1072,7 +1075,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8bff8419009a08f6cb7519a602c5590241fbff1446bcc823c07af15386eb801b"
 dependencies = [
  "alga",
- "ndarray 0.16.1",
+ "ndarray 0.15.6",
  "num-complex 0.4.6",
  "num-traits",
  "num_cpus",
@@ -1117,7 +1120,7 @@ dependencies = [
  "getrandom 0.3.4",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys",
 ]
 
 [[package]]
@@ -1298,15 +1301,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2f500e4d28234f72040990ec9d39e3a6b950f9f22d3dba18416c35882612bcb"
 dependencies = [
  "windows-targets",
-]
-
-[[package]]
-name = "windows-sys"
-version = "0.61.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
-dependencies = [
- "windows-link",
 ]
 
 [[package]]

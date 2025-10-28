@@ -24,7 +24,7 @@ export_seurat_to_folder <- function(seurat_obj, outdir, include_pca = TRUE) {
   dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 
   ## --- 1. Extract count matrix
-  counts <- Seurat::GetAssayData(seurat_obj, slot = "counts")
+  counts <- Seurat::GetAssayData(seurat_obj, layer = "counts")
   counts <- as(counts, "dgCMatrix")
 
   ## --- 2. Write matrix.mtx.gz
@@ -52,17 +52,18 @@ export_seurat_to_folder <- function(seurat_obj, outdir, include_pca = TRUE) {
               sep = "\t", quote = FALSE, row.names = FALSE)
 
   ## --- 6. Write UMAP embedding
-  if ("umap" %in% names(seurat_obj@reductions)) {
-    umap <- Seurat::Embeddings(seurat_obj, "umap")
-    write.table(umap, file = file.path(outdir, "umap.drc"),
-                sep = "\t", quote = FALSE, col.names = NA)
-  }
+  for (name in names(seurat_obj@reductions)){
+    umap <- Seurat::Embeddings(seurat_obj, name )
+    tmp = umap[,1:2]
+    if (ncol(umap) > 2 )
+      tmp = umap[,1:3] # assuming we have velocity in here
+    else {
+      tmp = rbind(tmp, rep(0, nrow(tmp)))
+    }
 
-  ## --- 7. Write PCA embedding (optional)
-  if (include_pca && "pca" %in% names(seurat_obj@reductions)) {
-    pca <- Seurat::Embeddings(seurat_obj, "pca")
-    write.table(pca, file = file.path(outdir, "pca.drc"),
-                sep = "\t", quote = FALSE, col.names = NA)
+    write.table(tmp, file = file.path(outdir, paste0(name,".drc")),
+                sep = "\t", quote = FALSE, col.names = FALSE)
+    print( paste0("exported file '", paste0(name,".drc"),"'") )
   }
 
   message("✅ Export completed to ", outdir)
