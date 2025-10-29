@@ -61,6 +61,9 @@ META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT={
 [xr]
 
 openxr/enabled=true
+openxr/default_action_map="uid://cftdqyrq423k4"
+openxr/form_factor=0
+openxr/binding_modifiers/analog_threshold=true
 shaders/enabled=true
 hybrid_app/enabled=true
 hybrid_app/launch_mode=1

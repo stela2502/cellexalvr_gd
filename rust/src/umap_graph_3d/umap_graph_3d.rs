@@ -90,7 +90,7 @@ impl UmapGraph3D {
         let mut sphere = SphereMesh::new_gd();
         //quad.set_size(Vector2::new(1.0, 1.0));
 
-        let radius = 0.05;
+        let radius = 0.005;
         sphere.set_radius(radius);
         sphere.set_height(radius * 2.0);
         sphere.set_radial_segments(8);
@@ -103,7 +103,7 @@ impl UmapGraph3D {
         let mut max = Vector3::new(f32::MIN, f32::MIN, f32::MIN);
 
         for (i, row) in view.axis_iter(ndarray::Axis(0)).enumerate() {
-            let pos = Vector3::new(row[0], row[1], row[2]);
+            let pos = Vector3::new(row[0] /10.0, row[1]/10.0, row[2]/10.0);
 
             // update bounds
             min.x = min.x.min(pos.x);
@@ -146,6 +146,7 @@ impl UmapGraph3D {
         shape.set_size(half_extents);  // box extents (half-size)
         shape_node.set_shape(&shape);
         area.add_child(&shape_node);
+        self.base_mut().add_child(&area);
 
         godot_print!("✅ projection '{}'::'{}' ready ({} points)", dataset_name, projection_type, n);
 
