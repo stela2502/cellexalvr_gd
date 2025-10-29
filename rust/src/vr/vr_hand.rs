@@ -63,7 +63,7 @@ impl VrHand {
             if self.hand_id == 0 { "left_grip" } else { "right_grip" },
         );
 
-        match (grip_pressed, self.is_grabbing, self.touched_object.clone()) {
+        match (grip_pressed, self.is_grabbing, self.touched_object ) {
             // Start grabbing
             (true, false, Some(obj)) => {
                 if let Ok(mut graph) = obj.clone().try_cast::<UmapGraph3D>() {

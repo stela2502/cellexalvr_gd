@@ -161,6 +161,98 @@ impl DataStore {
     }
 
 
+    /// Aggregate expression profiles into pseudo-bulk samples per cluster.
+    ///
+    /// Cells with NaN in `cluster_row` or `order_row` are ignored.
+    /// Each cluster is split into up to ~10 pseudo-samples, ordered by `order_row`.
+    ///
+    /// # Arguments
+    /// * `order_row`   - array of ordering values (1×N or N×1)
+    /// * `cluster_row` - array of cluster identifiers (1×N or N×1)
+    /// * `as_mean`     - if true, take mean per group instead of sum
+    ///
+    /// # Returns
+    /// `(Array2<f64>, Vec<usize>)` — matrix (genes × pseudo_samples) and cluster labels
+    pub fn make_pseudo_samples(
+        &self,
+        group_name: &str,
+        cluster_row: &Array2<f64>,
+        as_mean: bool,
+    ) -> (Array2<f64>, Vec<usize>) {
+
+        let cluster_row = self.cell_meta.as_vec_f64( group_name );
+        let order_row = self.cell_meta.as_vec_f64( &format!("{} order", group_name) );
+
+        let n_cells = order_row.len();
+        let n_genes = self.counts.rows();
+        fn to_usize(v: f64) -> Option<usize> {
+            if v.is_finite() && v >= 0.0 {
+                Some(v as usize)
+            } else {
+                None
+            }
+        }
+        // 1️⃣ Collect valid (cluster_id, order_value, cell_index)
+        let mut clusters: HashMap<usize, Vec<(f64, usize)>> = HashMap::new();
+        for (i, (&ord, &cl)) in order_row.iter().zip(cluster_row.iter()).enumerate() {
+            if let (Some(cid), true) = (to_usize(cl), ord.is_finite()) {
+                clusters.entry(cid).or_default().push((ord, i));
+            }
+        }
+
+        // 2️⃣ Aggregate per cluster
+        let mut pseudo_data: Vec<Vec<f64>> = Vec::new();
+        let mut pseudo_labels: Vec<usize> = Vec::new();
+
+        for (cluster_id, mut members) in clusters {
+            if members.is_empty() {
+                continue;
+            }
+
+            // Sort by order
+            members.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+
+            // Determine chunk size: target ~10 pseudo-samples
+            let n = members.len();
+            let chunk_size = (n / 10).max(1);
+
+            for chunk in members.chunks(chunk_size) {
+                let mut sum_vec = vec![0.0f64; n_genes];
+                for &(_, cell_idx) in chunk {
+                    if let Some(view) = self.counts.outer_view(cell_idx) {
+                        for (gene_idx, val) in view.iter() {
+                            sum_vec[gene_idx] += *val as f64;
+                        }
+                    }
+                }
+
+                // Normalize if requested
+                if as_mean && !chunk.is_empty() {
+                    let inv = 1.0 / chunk.len() as f64;
+                    for v in &mut sum_vec {
+                        *v *= inv;
+                    }
+                }
+
+                pseudo_data.push(sum_vec);
+                pseudo_labels.push(cluster_id);
+            }
+        }
+
+        // 3️⃣ Build ndarray (genes × pseudo_samples)
+        let n_pseudo = pseudo_data.len();
+        let mut pseudo_mat = Array2::<f64>::zeros((n_genes, n_pseudo));
+        for (j, col) in pseudo_data.iter().enumerate() {
+            let mut view = pseudo_mat.index_axis_mut(Axis(1), j);
+            for (i, &val) in col.iter().enumerate() {
+                view[i] = val;
+            }
+        }
+
+        (pseudo_mat, pseudo_labels)
+    }
+
+
     /// Load one DR coordinate file (UMAP, PCA, etc.) from TSV
     pub fn load_projection_from_tsv(&mut self, name: &str, path: &str) -> Result<(), String> {
         let ds = SurvivalData::from_tsv(path, b'\t', HashSet::new(), String::new())
