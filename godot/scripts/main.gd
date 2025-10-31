@@ -1,7 +1,7 @@
 extends Node3D
 
 @onready var core := PrintForgeCore.new()
-
+@onready var xr_user := XrUser.new()
 # A simple “paddle” box that we’ll move with keys to test selection
 var paddle_pos := Vector3(0, 0, 0)
 var paddle_size := Vector3(0.5, 0.5, 0.5)
@@ -20,3 +20,8 @@ func _ready():
 	core.load_dataset_and_projections("pbmc3k", dataset_path )
 	print("✅ Finished loading, creating 3D objects");
 	add_child(core)
+	core.add_to_group("PrintForgeCore")  # ✅ now discoverable!
+	print("Initializing the XRinterface:")
+	
+	add_child(xr_user)
+	
