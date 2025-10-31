@@ -21,15 +21,15 @@ pub struct UmapGraph3D {
 
     /// The dataset this projection belongs to
     #[export]
-    dataset_name: GString,
+    pub dataset_name: GString,
 
     /// the label that can be shown above the 3D object
     #[export]
-    label: GString,
+    pub label: GString,
 
     /// The projection type (e.g. "UMAP", "PCA")
     #[export]
-    projection_type: GString,
+    pub projection_type: GString,
 
     /// The number of clusters or groups visualized
     #[export]
@@ -40,6 +40,18 @@ pub struct UmapGraph3D {
 
     /// All the MultiMeshInstance3Ds used to render this projection
     meshes: Vec<Gd<MultiMeshInstance3D>>,
+
+    /// The radius of the initial VR object.
+    #[export]
+    radius: f32,
+
+    /// The re-centered center of the drc data.
+    #[export]
+    center: Vector3,
+
+    /// The scale_factor the original data was scaled to fit into VR
+    #[export]
+    scale_factor:f32
 
 }
 
@@ -103,6 +115,9 @@ impl UmapGraph3D {
         let mut max = Vector3::new(f32::MIN, f32::MIN, f32::MIN);
 
         for (i, row) in view.axis_iter(ndarray::Axis(0)).enumerate() {
+            if row[0].is_nan() || row[1].is_nan() || row[2].is_nan() {
+                continue;
+            }
             let pos = Vector3::new(row[0] /10.0, row[1]/10.0, row[2]/10.0);
 
             // update bounds
@@ -113,8 +128,26 @@ impl UmapGraph3D {
             max.x = max.x.max(pos.x);
             max.y = max.y.max(pos.y);
             max.z = max.z.max(pos.z);
+        }
 
-            let t = Transform3D::IDENTITY.translated(pos);
+        // compute normalization
+        // 2️⃣ compute center for X/Z and bottom-aligned Y
+        self.center = Vector3::new((min.x + max.x) * 0.5, min.y, (min.z + max.z) * 0.5);
+
+        // 3️⃣ compute uniform scale (fit in ~3 m space)
+        let extent = (max - min).length();
+        self.scale_factor = 3.0 / extent;
+
+        for (i, row) in view.axis_iter(ndarray::Axis(0)).enumerate() {
+            if row[0].is_nan() || row[1].is_nan() || row[2].is_nan() {
+                multimesh.set_instance_color(i as i32, Color::from_rgba(0.0, 0.0, 0.0, 0.0)); // transparent
+                multimesh.set_instance_transform(i as i32, Transform3D::IDENTITY.scaled(Vector3::ZERO)); // collapsed
+                continue;
+            }
+            let pos = Vector3::new(row[0] /10.0, row[1]/10.0, row[2]/10.0);
+            let pos_norm = (pos - self.center) * self.scale_factor * 3.0; // 3.0 = target size in meters
+
+            let t = Transform3D::IDENTITY.translated(pos_norm);
             multimesh.set_instance_transform(i as i32, t);
             multimesh.set_instance_color(i as i32, base_color);
         }
@@ -147,10 +180,71 @@ impl UmapGraph3D {
         shape_node.set_shape(&shape);
         area.add_child(&shape_node);
         self.base_mut().add_child(&area);
+        self.base_mut().add_to_group("UmapGraphs");
 
         godot_print!("✅ projection '{}'::'{}' ready ({} points)", dataset_name, projection_type, n);
 
     }
+
+
+    pub fn world_selection_to_data_selection(
+        &self,
+        center_vr: Vector3,
+        radius_vr: f32,
+    ) -> (Vector3, f32) {
+        godot_print!(
+            "🧩 world_selection_to_data_selection called for {:?} with r={:.3}",
+            center_vr,
+            radius_vr,
+        );
+
+        // Convert world (VR) → local (graph) coordinates
+        let transform = self.base().get_global_transform();
+        let center_local = transform.affine_inverse().xform_inv(center_vr);
+
+        // Convert graph local → data coordinate space
+        let center_data = (center_local / self.scale_factor) + self.center;
+        let radius_data = radius_vr / self.scale_factor;
+
+        godot_print!(
+            "📈 mapped to data-space: center={:?}, radius={:.4}",
+            center_data,
+            radius_data
+        );
+
+        (center_data, radius_data)
+    }
+
+    pub fn set_to_color(&mut self, ids: &Vec<i32>, color: Color) {
+        if self.meshes.is_empty() {
+            godot_warn!("⚠️ No MultiMesh found in UmapGraph3D '{}'", self.dataset_name);
+            return;
+        }
+
+        // Assume first mesh holds the instances
+
+        let inst = self.meshes[0].clone();
+        let color_variant = color.to_variant();
+        if let Some(mut mm) = inst.get_multimesh() {
+            for id in ids.as_slice() {
+                let idx = *id as i32;
+                let c = mm.get_instance_color(idx);
+                if c.a != 0.0 {
+                    mm.set_instance_color(idx, color);
+                }
+            }
+        }
+
+        godot_print!(
+            "🎨 Updated {} points to color ({:.2}, {:.2}, {:.2}) in '{}'",
+            ids.len(),
+            color.r,
+            color.g,
+            color.b,
+            self.dataset_name
+        );
+    }
+
 
     /* // needs Godot update to get there!
     #[func]

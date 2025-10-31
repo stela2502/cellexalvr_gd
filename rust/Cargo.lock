@@ -933,6 +933,7 @@ dependencies = [
  "glam",
  "godot",
  "ndarray 0.16.1",
+ "ordered-float",
  "parry3d",
  "rayon",
  "rust_data_table",

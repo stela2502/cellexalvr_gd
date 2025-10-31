@@ -115,12 +115,13 @@ impl DataStore {
 
         
         println!("📈 searching path {} for projections linke '*.drc'",dir.to_string_lossy() );
+        
         let dataset_path = Path::new(&dir);
         let dataset_str = dataset_path
             .file_name()                    // last path component
             .and_then(|s| s.to_str())       // convert OsStr → &str
             .unwrap_or("<unknown>");        // fallback if not valid UTF-8
-
+        
         let mut projections = Vec::new();
 
         if let Ok(entries) = fs::read_dir(dataset_path) {
@@ -288,13 +289,13 @@ impl DataStore {
 
     /// Select cells in a projection by 3D position + radius (VR-space),
     /// updating `cell_meta` and creating `active_group` if needed.
-    pub fn select_cells(
+    pub fn select_in_sphere(
         &mut self,
         projection_name: &str,
-        group_id: usize,
+        group_id: &str,
         position: &[f32], // 3D position from VR
         radius: f32,      // VR radius (same scale as positions)
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Vec<i32>> {
         // ─── ensure projection exists
         let Some(view) = self.drcs.get(projection_name) else {
             anyhow::bail!("Projection '{}' not found", projection_name);
@@ -316,19 +317,17 @@ impl DataStore {
 
         // ─── compute squared radius once
         let r2 = radius * radius;
-        let center = [position[0], position[1], position[2]];
 
         // ─── scan through all cells and update metadata
         let mut changed: Vec<(usize, f32)> = Vec::new();
         for (i, row) in view.axis_iter(Axis(0)).enumerate() {
-            let dx = row[0] - center[0];
-            let dy = row[1] - center[1];
-            let dz = row[2] - center[2];
+            let dx = row[0] - position[0];
+            let dy = row[1] - position[1];
+            let dz = row[2] - position[2];
             let d2 = dx * dx + dy * dy + dz * dz;
             if d2 <= r2 {
                 // try to update; if changed, mark with order id
-                if self.cell_meta.update_value(&group_name, i, group_id as f64 ) {
-                    
+                if self.cell_meta.update_value_str(&group_name, i, group_id ) {
                     changed.push((i, d2));
                 }
             }
@@ -336,11 +335,13 @@ impl DataStore {
 
         // sort by distance
         changed.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        let mut ret = Vec::<i32>::with_capacity(changed.len());
         for (i, _) in changed {
             self.cell_meta.update_order(&order_col, i);
+            ret.push(i as i32);
         }
         
-        Ok(())
+        Ok(ret)
     }
 
 }

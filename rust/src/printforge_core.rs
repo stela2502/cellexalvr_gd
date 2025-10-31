@@ -1,11 +1,13 @@
 use godot::prelude::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::data_store::DataStore;
 use crate::umap_graph_3d::UmapGraph3D;
 use godot::classes::Engine;
 use std::path::Path;
 use std::fs;
+use crate::utils::color_to_id;
+use ordered_float::OrderedFloat;
 
 
 #[derive(GodotClass)]
@@ -91,6 +93,61 @@ impl PrintForgeCore {
         }
 
     }
+
+    #[func]
+    pub fn handle_selection(&mut self, center_data: Vector3, radius_data: f32, color: Color) {
+        godot_print!(
+            "🎯 Core handling selection center={:?}, r={:.3}",
+            center_data,
+            radius_data
+        );
+
+        let group_id = color_to_id(&color);
+
+
+        for (dataset_name, ds) in self.datasets.iter_mut() {
+            // Collect unique cell IDs across all projections for this dataset
+            let mut all_selected: HashSet<i32> = HashSet::new();
+
+            // 1️⃣ Iterate over all projections belonging to this dataset
+            for   graph_gd in self.projections.iter() {
+                let  graph = graph_gd.bind();
+
+                if graph.dataset_name.to_string() != *dataset_name {
+                    continue;
+                }
+
+                // Convert VR → data space for this graph
+                let (data_center, data_radius) =
+                    graph.world_selection_to_data_selection(center_data, radius_data);
+
+                // Select once per dataset (if not yet computed)
+                let pos = [center_data.x, center_data.y, center_data.z];
+                let selected = ds.select_in_sphere(
+                    &(graph.projection_type.to_string()),
+                    &group_id,
+                    &pos,
+                    data_radius,
+
+                );
+                while let Ok(ref v) = selected{
+                    all_selected.extend(v);
+                }
+            }
+
+            // 2️⃣ Apply coloring to ALL UmapGraph3D belonging to this dataset
+            if !all_selected.is_empty() {
+                let selected_vec: Vec<i32> = all_selected.iter().copied().collect();
+                for mut graph_gd in self.projections.iter_mut() {
+                    let mut graph = graph_gd.bind_mut();
+                    if graph.dataset_name.to_string() == *dataset_name {
+                        graph.set_to_color(&selected_vec, color);
+                    }
+                }
+            }
+        }
+    }
+
     
     fn matches_ignore_ascii_case(a: &str, b: &str) -> bool {
         a.eq_ignore_ascii_case(b)
